@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildAITraders.ai — Build Autonomous Trading Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #050505;
+    --bg-1: #0a0a0a;
+    --bg-2: #111111;
+    --bg-3: #181818;
+    --teal: #E8B86D;
+    --teal-dim: rgba(232, 184, 109, 0.12);
+    --teal-glow: rgba(232, 184, 109, 0.04);
+    --white: #ffffff;
+    --white-70: rgba(255,255,255,0.7);
+    --white-40: rgba(255,255,255,0.4);
+    --white-20: rgba(255,255,255,0.2);
+    --white-10: rgba(255,255,255,0.06);
+    --white-5: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE TEXTURE ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 40px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(5, 5, 5, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo-mark {
+    width: 28px; height: 28px;
+    background: var(--teal);
+    border-radius: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .nav-logo-mark::before {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    border: 2px solid #050505;
+    border-radius: 0;
+    transform: rotate(12deg);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--white-40);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-ghost {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--white-70);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 0;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--white); background: var(--white-10); }
+
+  .btn-primary {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #050505;
+    background: var(--teal);
+    border: none;
+    cursor: pointer;
+    padding: 8px 18px;
+    border-radius: 0;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    padding: 120px 40px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .hero-left { max-width: 580px; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 8px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(232, 184, 109, 0.2);
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--teal);
+    font-family: var(--font-body);
+    margin-bottom: 32px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-badge-dot {
+    width: 6px; height: 6px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(44px, 5.5vw, 72px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+    color: var(--white);
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero-h1 .teal { color: var(--teal); }
+
+  .hero-sub {
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--white-40);
+    line-height: 1.65;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-tagline {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    font-family: var(--font-mono);
+    animation: fadeUp 0.6s 0.25s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-hero-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    background: var(--teal);
+    color: #050505;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 0;
+    text-decoration: none;
+    transition: all 0.2s;
+    letter-spacing: -0.01em;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-hero-primary:hover {
+    opacity: 0.88;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(232, 184, 109, 0.2);
+  }
+
+  .btn-hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    background: transparent;
+    color: var(--white-70);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 0;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+  }
+
+  .btn-hero-secondary:hover {
+    background: var(--white-10);
+    color: var(--white);
+    border-color: var(--border-hover);
+  }
+
+  /* ─── AGENT CARD (hero right) ─── */
+  .hero-right {
+    display: flex;
+    justify-content: center;
+    animation: fadeUp 0.8s 0.15s ease both;
+    position: relative;
+  }
+
+  .agent-interface {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 40px 80px rgba(0,0,0,0.6),
+      0 0 120px rgba(232, 184, 109, 0.04);
+  }
+
+  .ai-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .titlebar-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+
+  .titlebar-label {
+    margin-left: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--white-20);
+    letter-spacing: 0.04em;
+  }
+
+  .ai-prompt-area {
+    padding: 20px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prompt-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.7;
+  }
+
+  .prompt-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--white-70);
+    line-height: 1.6;
+    min-height: 42px;
+  }
+
+  .prompt-cursor {
+    display: inline-block;
+    width: 2px; height: 14px;
+    background: var(--teal);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1.1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .ai-agent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 8px;
+  }
+
+  .agent-name-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--white-20);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .agent-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.02em;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(232, 184, 109, 0.08);
+    border: 1px solid rgba(232, 184, 109, 0.18);
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--teal);
+    font-family: var(--font-mono);
+  }
+
+  .status-dot {
+    width: 5px; height: 5px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  .agent-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin: 12px 0 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .metric {
+    background: var(--bg);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--white-20);
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .metric-value {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+
+  .metric-value.positive { color: #4ade80; }
+
+  .agent-chart {
+    padding: 18px 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--white-20);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .chart-svg { width: 100%; height: 60px; overflow: visible; }
+
+  /* ─── AMBIENT GLOW ─── */
+  .ambient-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SECTIONS ─── */
+  section { position: relative; }
+
+  .section-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ─── SOCIAL PROOF ─── */
+  .social-proof {
+    padding: 56px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-1);
+  }
+
+  .social-proof-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+    text-align: center;
+  }
+
+  .social-proof-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--white-20);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    margin-bottom: 36px;
+  }
+
+  .logos-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+
+  .logo-item {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: -0.02em;
+    transition: color 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+  }
+
+  .logo-item:hover { color: rgba(255,255,255,0.35); }
+
+  /* ─── FEATURES ─── */
+  .features {
+    padding: 120px 0;
+  }
+
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0.7;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    font-size: 16px;
+    color: var(--white-40);
+    max-width: 460px;
+    line-height: 1.65;
+    margin-bottom: 64px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .feature-card {
+    background: rgba(255,255,255,0.028);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, background 0.3s;
+    cursor: default;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(232, 184, 109, 0.04) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .feature-card:hover { border-color: rgba(232, 184, 109, 0.15); background: rgba(255,255,255,0.04); }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    width: 44px; height: 44px;
+    background: var(--teal-dim);
+    border: 1px solid rgba(232, 184, 109, 0.18);
+    border-radius: 0;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+    font-size: 18px;
+  }
+
+  .feature-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+
+  .feature-desc {
+    font-size: 14px;
+    color: var(--white-40);
+    line-height: 1.7;
+  }
+
+  /* ─── WORKFLOW ─── */
+  .workflow {
+    padding: 120px 0;
+    background: var(--bg-1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .workflow-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: center;
+  }
+
+  .workflow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .workflow-line {
+    position: absolute;
+    left: 19px;
+    top: 32px;
+    bottom: 32px;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--border) 10%, var(--border) 90%, transparent);
+  }
+
+  .workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 0;
+    position: relative;
+    cursor: default;
+  }
+
+  .step-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--white-20);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+  }
+
+  .workflow-step:hover .step-num {
+    background: var(--teal-dim);
+    border-color: rgba(0, 255, 200, 0.3);
+    color: var(--teal);
+  }
+
+  .step-content {}
+  .step-name {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin-bottom: 3px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: var(--white-40);
+    line-height: 1.55;
+  }
+
+  .workflow-text {}
+  .workflow-number {
+    font-family: var(--font-display);
+    font-size: 80px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.04);
+    letter-spacing: -0.06em;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  /* ─── AGENT GALLERY ─── */
+  .gallery {
+    padding: 120px 0;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 56px;
+  }
+
+  .agent-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 24px 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .agent-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--teal), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .agent-card:hover {
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    transform: translateY(-2px);
+  }
+
+  .agent-card:hover::after { opacity: 1; }
+
+  .agent-card-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .agent-card-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .agent-metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .aml { font-size: 10px; color: var(--white-20); font-family: var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; }
+  .amv { font-size: 12px; font-weight: 500; color: var(--white-70); font-family: var(--font-mono); }
+  .amv.pos { color: #4ade80; }
+  .amv.med { color: #fbbf24; }
+
+  .agent-card-status {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--teal);
+    font-weight: 500;
+  }
+
+  .status-dot-sm {
+    width: 5px; height: 5px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  /* ─── ECOSYSTEM ─── */
+  .ecosystem {
+    padding: 120px 0;
+    background: var(--bg-1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ecosystem-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px;
+    text-align: center;
+  }
+
+  .ecosystem-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 56px 0;
+    flex-wrap: wrap;
+  }
+
+  .eco-node {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 28px 36px;
+    min-width: 180px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .eco-node:hover {
+    border-color: rgba(232, 184, 109, 0.2);
+    background: rgba(232, 184, 109, 0.03);
+  }
+
+  .eco-node-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--white-20);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .eco-node-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.03em;
+  }
+
+  .eco-node.primary .eco-node-name { color: var(--teal); }
+
+  .eco-arrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--white-20);
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .eco-arrow-line {
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), rgba(0, 255, 200, 0.3), var(--border));
+    position: relative;
+  }
+
+  .eco-arrow-line::after {
+    content: '›';
+    position: absolute;
+    right: -5px;
+    top: -8px;
+    color: rgba(0, 255, 200, 0.4);
+    font-size: 16px;
+  }
+
+  .ecosystem-soon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 11px;
+    color: var(--white-20);
+    font-family: var(--font-mono);
+    margin-bottom: 24px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ─── FINAL CTA ─── */
+  .final-cta {
+    padding: 160px 40px;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .cta-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(232, 184, 109, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .final-cta-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.02;
+    color: var(--white);
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .final-cta-sub {
+    font-size: 16px;
+    color: var(--white-40);
+    margin-bottom: 40px;
+    font-weight: 400;
+    position: relative;
+  }
+
+  .final-cta-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 32px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--white-20);
+    font-family: var(--font-mono);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    color: var(--white-20);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-family: var(--font-mono);
+  }
+
+  .footer-links a:hover { color: var(--white-40); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 0; }
+
+  /* ─── MOBILE MENU ─── */
+  .mobile-menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    width: 38px; height: 38px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-direction: column;
+    gap: 5px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .mobile-menu-btn span {
+    display: block;
+    width: 16px; height: 1.5px;
+    background: var(--white-70);
+    border-radius: 0;
+    transition: all 0.3s;
+  }
+
+  .mobile-menu-btn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .mobile-menu-btn.open span:nth-child(2) { opacity: 0; }
+  .mobile-menu-btn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  .mobile-nav-drawer {
+    display: none;
+    position: fixed;
+    top: 64px; left: 0; right: 0;
+    background: rgba(8, 8, 8, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 24px 32px;
+    z-index: 99;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-nav-drawer.open { display: flex; }
+
+  .mobile-nav-drawer a {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--white-70);
+    text-decoration: none;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+
+  .mobile-nav-drawer a:last-child { border-bottom: none; }
+  .mobile-nav-drawer a:hover { color: var(--white); }
+
+  .mobile-nav-cta {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-nav-cta .btn-hero-primary,
+  .mobile-nav-cta .btn-hero-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+
+  /* ─── RESPONSIVE BREAKPOINTS ─── */
+
+  /* Tablet: 768px – 1024px */
+  @media (max-width: 1024px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 100px 32px 64px;
+      gap: 48px;
+      min-height: auto;
+    }
+
+    .hero-left { max-width: 100%; }
+
+    .hero-right { justify-content: flex-start; }
+
+    .agent-interface { max-width: 100%; }
+
+    .features-grid { grid-template-columns: 1fr 1fr; }
+
+    .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+
+    .workflow-inner { grid-template-columns: 1fr; gap: 56px; }
+
+    .workflow-text { order: -1; }
+
+    .workflow-number { font-size: 56px; }
+
+    .ecosystem-diagram { flex-direction: column; align-items: center; }
+
+    .eco-arrow { transform: rotate(90deg); }
+
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+
+  /* Mobile: up to 767px */
+  @media (max-width: 767px) {
+    /* Nav */
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .nav-actions { display: none; }
+    .mobile-menu-btn { display: flex; }
+
+    /* Hero */
+    .hero {
+      padding: 88px 20px 56px;
+      gap: 40px;
+    }
+
+    .hero-h1 { font-size: 40px; }
+
+    .hero-sub { font-size: 15px; }
+
+    .hero-tagline { font-size: 11px; }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-hero-primary,
+    .btn-hero-secondary {
+      width: 100%;
+      justify-content: center;
+      padding: 15px 24px;
+      font-size: 15px;
+    }
+
+    /* Agent card metrics — 2x2 grid on mobile */
+    .agent-metrics { grid-template-columns: 1fr 1fr; }
+
+    /* Social proof */
+    .social-proof { padding: 40px 0; }
+    .social-proof-inner { padding: 0 20px; }
+    .logos-grid { gap: 28px; }
+    .logo-item { font-size: 10px; }
+
+    /* Sections */
+    .section-inner { padding: 0 20px; }
+    .features { padding: 80px 0; }
+    .features-grid { grid-template-columns: 1fr; gap: 12px; }
+    .feature-card { padding: 28px 24px; }
+
+    /* Workflow */
+    .workflow { padding: 80px 0; }
+    .workflow-inner { padding: 0 20px; gap: 40px; }
+    .workflow-number { font-size: 44px; }
+    .section-title { font-size: 32px; }
+
+    /* Gallery */
+    .gallery { padding: 80px 0; }
+    .gallery-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Ecosystem */
+    .ecosystem { padding: 80px 0; }
+    .ecosystem-inner { padding: 0 20px; }
+    .eco-node { min-width: 140px; padding: 20px 24px; }
+    .eco-node-name { font-size: 15px; }
+
+    /* Final CTA */
+    .final-cta { padding: 100px 20px; }
+    .final-cta-title { font-size: 34px; }
+    .final-cta-actions { flex-direction: column; align-items: stretch; }
+    .final-cta-actions .btn-hero-primary,
+    .final-cta-actions .btn-hero-secondary {
+      width: 100%;
+      justify-content: center;
+      padding: 15px 24px;
+      font-size: 15px;
+    }
+
+    /* Footer */
+    footer {
+      flex-direction: column;
+      gap: 16px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .footer-links { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  }
+
+  /* Small phones: up to 400px */
+  @media (max-width: 400px) {
+    .hero-h1 { font-size: 34px; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .eco-node { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark"></div>
+    BuildAITraders<span style="color:var(--teal)">.ai</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#workflow">Workflow</a></li>
+    <li><a href="#gallery">Agents</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Pricing</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="#" class="btn-ghost">Sign in</a>
+    <a href="#" class="btn-primary">Start Building</a>
+  </div>
+  <button class="mobile-menu-btn" id="menuBtn" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-nav-drawer" id="mobileDrawer">
+  <a href="#features">Features</a>
+  <a href="#workflow">Workflow</a>
+  <a href="#gallery">Agents</a>
+  <a href="#">Docs</a>
+  <a href="#">Pricing</a>
+  <div class="mobile-nav-cta">
+    <a href="#" class="btn-hero-secondary">Sign in</a>
+    <a href="#" class="btn-hero-primary">Start Building</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section>
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        Now in Beta
+      </div>
+      <h1 class="hero-h1">Build AI<br>traders.</h1>
+      <p class="hero-sub">Create, backtest, and deploy autonomous trading agents using natural language. No code required.</p>
+      <p class="hero-tagline">Build strategies · Test ideas · Deploy agents</p>
+      <div class="hero-actions">
+        <a href="#" class="btn-hero-primary">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Start Building
+        </a>
+        <a href="#" class="btn-hero-secondary">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.2 4.5L8.5 6.5L5.2 8.5V4.5Z" fill="currentColor"/></svg>
+          Watch Demo
+        </a>
+      </div>
+    </div>
+
+    <!-- Agent Interface Card -->
+    <div class="hero-right">
+      <div style="position:relative;">
+        <!-- Glow behind card -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:300px;background:radial-gradient(ellipse,rgba(0,255,200,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;"></div>
+
+        <div class="agent-interface" style="position:relative;z-index:1;">
+          <!-- Title bar -->
+          <div class="ai-titlebar">
+            <div class="titlebar-dot dot-red"></div>
+            <div class="titlebar-dot dot-yellow"></div>
+            <div class="titlebar-dot dot-green"></div>
+            <span class="titlebar-label">agent / momentum-hunter.ai</span>
+          </div>
+
+          <!-- Prompt -->
+          <div class="ai-prompt-area">
+            <div class="prompt-label">↗ Prompt</div>
+            <div class="prompt-text" id="typedPrompt"><span class="prompt-cursor"></span></div>
+          </div>
+
+          <!-- Agent Header -->
+          <div class="ai-agent-header">
+            <div>
+              <div class="agent-name-label">Agent Name</div>
+              <div class="agent-name">Momentum Hunter</div>
+            </div>
+            <div class="status-pill">
+              <div class="status-dot"></div>
+              Paper Trading
+            </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="agent-metrics">
+            <div class="metric">
+              <div class="metric-label">PnL</div>
+              <div class="metric-value positive">+12.4%</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Trades</div>
+              <div class="metric-value">87</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Win Rate</div>
+              <div class="metric-value">64%</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Risk</div>
+              <div class="metric-value" style="color:#fbbf24">Med</div>
+            </div>
+          </div>
+
+          <!-- Mini chart -->
+          <div class="agent-chart">
+            <div class="chart-label">Equity Curve</div>
+            <svg class="chart-svg" viewBox="0 0 440 60" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#E8B86D" stop-opacity="0.15"/>
+                  <stop offset="100%" stop-color="#E8B86D" stop-opacity="0"/>
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <path d="M0,52 C30,50 50,46 80,44 C110,42 130,48 160,38 C190,28 210,35 240,24 C270,13 290,18 320,10 C350,4 380,7 440,3 L440,60 L0,60 Z" fill="url(#chartGrad)"/>
+              <path d="M0,52 C30,50 50,46 80,44 C110,42 130,48 160,38 C190,28 210,35 240,24 C270,13 290,18 320,10 C350,4 380,7 440,3" fill="none" stroke="#E8B86D" stroke-width="1.5" filter="url(#glow)"/>
+              <!-- Data points -->
+              <circle cx="160" cy="38" r="2.5" fill="#E8B86D" opacity="0.5"/>
+              <circle cx="240" cy="24" r="2.5" fill="#E8B86D" opacity="0.5"/>
+              <circle cx="440" cy="3" r="3" fill="#E8B86D"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="social-proof">
+  <div class="social-proof-inner">
+    <p class="social-proof-label">Trusted by traders, builders, and AI enthusiasts</p>
+    <div class="logos-grid">
+      <div class="logo-item">QUANT LABS</div>
+      <div class="logo-item">ALPHAVAULT</div>
+      <div class="logo-item">NEXUS CAPITAL</div>
+      <div class="logo-item">GRIDWORKS</div>
+      <div class="logo-item">HELIX ALGO</div>
+      <div class="logo-item">SYNAPSE FX</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features fade-in" id="features">
+  <div class="section-inner">
+    <div class="section-eyebrow">What you can do</div>
+    <h2 class="section-title">Intelligence,<br>without complexity.</h2>
+    <p class="section-sub">Everything you need to go from idea to autonomous trading agent — in minutes, not months.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">✦</div>
+        <div class="feature-title">Create Agents</div>
+        <p class="feature-desc">Describe your strategy in plain English. Our AI transforms your ideas into executable logic with built-in risk controls and execution logic.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◈</div>
+        <div class="feature-title">Backtest Ideas</div>
+        <p class="feature-desc">Evaluate performance against years of historical data before risking a single dollar. See drawdowns, Sharpe ratios, and win rates at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⟳</div>
+        <div class="feature-title">Run Continuously</div>
+        <p class="feature-desc">Deploy autonomous agents that monitor markets, adapt to conditions, and execute with precision — around the clock, without intervention.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section class="workflow" id="workflow">
+  <div class="workflow-inner">
+    <div class="workflow-steps fade-in">
+      <div class="workflow-line"></div>
+      <div class="workflow-step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-name">Describe</div>
+          <div class="step-desc">Write your strategy in natural language. No syntax, no boilerplate.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-name">Backtest</div>
+          <div class="step-desc">Simulate against historical data. Surface edge cases and weaknesses.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-name">Paper Trade</div>
+          <div class="step-desc">Run live with real market data, no capital at risk. Build confidence.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <div class="step-name">Deploy</div>
+          <div class="step-desc">Go live with one click. Your agent monitors and executes autonomously.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <div class="step-name">Improve</div>
+          <div class="step-desc">Review performance, refine the strategy, and redeploy. Compound your edge.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-text fade-in">
+      <div class="workflow-number">05</div>
+      <div class="section-eyebrow">The process</div>
+      <h2 class="section-title">From idea<br>to agent.</h2>
+      <p class="section-sub" style="margin-bottom:0;">Build, test, and evolve trading intelligence in a continuous loop designed to sharpen your edge over time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AGENT GALLERY -->
+<section class="gallery fade-in" id="gallery">
+  <div class="section-inner">
+    <div class="section-eyebrow">Agent gallery</div>
+    <h2 class="section-title">Start from<br>what works.</h2>
+    <p class="section-sub" style="margin-bottom:0;">Browse example agents built by the community. Fork, customize, and deploy in seconds.</p>
+
+    <div class="gallery-grid">
+      <!-- Agent 1 -->
+      <div class="agent-card">
+        <div class="agent-card-name">Momentum Hunter</div>
+        <div class="agent-card-metrics">
+          <div class="agent-metric-row"><span class="aml">Perf</span><span class="amv pos">+12.4%</span></div>
+          <div class="agent-metric-row"><span class="aml">Risk</span><span class="amv med">Medium</span></div>
+          <div class="agent-metric-row"><span class="aml">Trades</span><span class="amv">87</span></div>
+        </div>
+        <div class="agent-card-status"><div class="status-dot-sm"></div>Live</div>
+      </div>
+      <!-- Agent 2 -->
+      <div class="agent-card">
+        <div class="agent-card-name">ETH Swing</div>
+        <div class="agent-card-metrics">
+          <div class="agent-metric-row"><span class="aml">Perf</span><span class="amv pos">+8.1%</span></div>
+          <div class="agent-metric-row"><span class="aml">Risk</span><span class="amv" style="color:#4ade80">Low</span></div>
+          <div class="agent-metric-row"><span class="aml">Trades</span><span class="amv">43</span></div>
+        </div>
+        <div class="agent-card-status"><div class="status-dot-sm"></div>Paper</div>
+      </div>
+      <!-- Agent 3 -->
+      <div class="agent-card">
+        <div class="agent-card-name">Mean Rev Pro</div>
+        <div class="agent-card-metrics">
+          <div class="agent-metric-row"><span class="aml">Perf</span><span class="amv pos">+21.7%</span></div>
+          <div class="agent-metric-row"><span class="aml">Risk</span><span class="amv med">Medium</span></div>
+          <div class="agent-metric-row"><span class="aml">Trades</span><span class="amv">214</span></div>
+        </div>
+        <div class="agent-card-status"><div class="status-dot-sm"></div>Live</div>
+      </div>
+      <!-- Agent 4 -->
+      <div class="agent-card">
+        <div class="agent-card-name">Meme Hunter</div>
+        <div class="agent-card-metrics">
+          <div class="agent-metric-row"><span class="aml">Perf</span><span class="amv pos">+34.2%</span></div>
+          <div class="agent-metric-row"><span class="aml">Risk</span><span class="amv" style="color:#f87171">High</span></div>
+          <div class="agent-metric-row"><span class="aml">Trades</span><span class="amv">156</span></div>
+        </div>
+        <div class="agent-card-status"><div class="status-dot-sm"></div>Paper</div>
+      </div>
+      <!-- Agent 5 -->
+      <div class="agent-card">
+        <div class="agent-card-name">Trend Rider</div>
+        <div class="agent-card-metrics">
+          <div class="agent-metric-row"><span class="aml">Perf</span><span class="amv pos">+15.9%</span></div>
+          <div class="agent-metric-row"><span class="aml">Risk</span><span class="amv med">Medium</span></div>
+          <div class="agent-metric-row"><span class="aml">Trades</span><span class="amv">102</span></div>
+        </div>
+        <div class="agent-card-status"><div class="status-dot-sm"></div>Live</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ECOSYSTEM -->
+<section class="ecosystem fade-in">
+  <div class="ecosystem-inner">
+    <div class="ecosystem-soon">Coming soon</div>
+    <h2 class="section-title" style="margin-bottom:16px;">Publish to Strata.</h2>
+    <p style="font-size:16px;color:var(--white-40);line-height:1.65;max-width:520px;margin:0 auto 0;">Soon, agents built with BuildAITraders.ai can be published to Strata — a marketplace where creators monetize and share trading intelligence with the world.</p>
+
+    <div class="ecosystem-diagram">
+      <div class="eco-node primary">
+        <div class="eco-node-label">Built with</div>
+        <div class="eco-node-name">BuildAITraders</div>
+      </div>
+      <div class="eco-arrow">
+        <div class="eco-arrow-line"></div>
+      </div>
+      <div class="eco-node">
+        <div class="eco-node-label">Published to</div>
+        <div class="eco-node-name" style="background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Strata</div>
+      </div>
+      <div class="eco-arrow">
+        <div class="eco-arrow-line"></div>
+      </div>
+      <div class="eco-node">
+        <div class="eco-node-label">Discovered by</div>
+        <div class="eco-node-name">Traders</div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--white-20);font-family:var(--font-mono);">Your strategy. Your audience. Your revenue.</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section>
+  <div class="final-cta fade-in">
+    <div class="cta-glow"></div>
+    <div class="section-eyebrow" style="justify-content:center;display:flex;">The future belongs to agents</div>
+    <h2 class="final-cta-title">Start building trading<br>intelligence.</h2>
+    <p class="final-cta-sub">Join thousands of builders and traders already on the platform.</p>
+    <div class="final-cta-actions">
+      <a href="#" class="btn-hero-primary">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 7L7 13M1 7H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Start Building
+      </a>
+      <a href="#" class="btn-hero-secondary">Read the Docs</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-copy">© 2026 BuildAITraders.ai</span>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Docs</a>
+    <a href="#">Status</a>
+  </div>
+</footer>
+
+<script>
+  // ── TYPING ANIMATION ──
+  const promptEl = document.getElementById('typedPrompt');
+  const fullText = 'Create an ETH momentum trader using EMA crossovers and RSI confirmation.';
+  let i = 0;
+  let started = false;
+
+  function typeChar() {
+    if (i < fullText.length) {
+      const cursor = '<span class="prompt-cursor"></span>';
+      promptEl.innerHTML = fullText.slice(0, i + 1) + cursor;
+      i++;
+      setTimeout(typeChar, 35 + Math.random() * 30);
+    }
+  }
+
+  // Start typing after a short delay
+  setTimeout(typeChar, 800);
+
+  // ── SCROLL ANIMATIONS ──
+  const fadeEls = document.querySelectorAll('.fade-in');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, idx) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  fadeEls.forEach(el => observer.observe(el));
+
+  // ── NAV SCROLL EFFECT ──
+  const navEl = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 40) {
+      navEl.style.borderBottomColor = 'rgba(255,255,255,0.05)';
+    } else {
+      navEl.style.borderBottomColor = 'rgba(255,255,255,0.07)';
+    }
+  });
+
+  // ── MOBILE MENU ──
+  const menuBtn = document.getElementById('menuBtn');
+  const drawer = document.getElementById('mobileDrawer');
+
+  menuBtn.addEventListener('click', () => {
+    const isOpen = drawer.classList.toggle('open');
+    menuBtn.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  // Close drawer when a link is tapped
+  drawer.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      drawer.classList.remove('open');
+      menuBtn.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+</script>
+
+</body>
+</html>
